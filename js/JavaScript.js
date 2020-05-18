@@ -94,12 +94,19 @@ var firebaseConfig = {
     measurementId: "G-YVYGGHC28N"
   };
 
+
 Settings = {};
 Settings.version = '1.9.4';
 Settings.releaseNotes = 'https://docs.google.com/spreadsheets/d/1jzv_lLnXRvRS_dNuhyWTuGT7cebsXX-kjflsbZim3O8';
 domain = '';
 currentPatientName = '';
 currentPatientPhone = '';
+deferredPrompt={};
+
+window.addEventListener('beforeinstallprompt', (e) => {
+    // Prevent the mini-infobar from appearing on mobile
+    e.prompt();
+});
 
 function handleServiceWorker(){
     if ("serviceWorker" in navigator) {
@@ -115,10 +122,9 @@ function handleServiceWorker(){
         })
         handleFirebasePush();
     }
-}
+};
 
 function handleFirebasePush(){
-    
     firebase.initializeApp(firebaseConfig);
     const messaging = firebase.messaging();
     messaging
@@ -138,43 +144,33 @@ function handleFirebasePush(){
         const { title, ...options } = payload.notification;
       });
 
-      messaging.onTokenRefresh(() => {
+    messaging.onTokenRefresh(() => {
         messaging.getToken().then((refreshedToken) => {
-          console.log('Token refreshed.');
-          // Indicate that the new Instance ID token has not yet been sent to the
-          // app server.
-          //setTokenSentToServer(false);
-          // Send Instance ID token to app server.
-          //sendTokenToServer(refreshedToken);
-          // ...
+            console.log('Token refreshed.',refreshedToken);
+            //save new token to server
         }).catch((err) => {
-          console.log('Unable to retrieve refreshed token ', err);
-          //showToken('Unable to retrieve refreshed token ', err);
+            console.log('Unable to retrieve refreshed token ', err);
+            //showToken('Unable to retrieve refreshed token ', err);
         });
-      });
-    
+    }); 
 }
-
-function defaultServerDomain() {
+(function defaultServerDomain() {
     handleServiceWorker();
-    //enablePush();
     if (localStorage.domain) {
         domain = localStorage.domain;
-
     }
- 
-    else {
-        if (window.location.href.includes('http')) {
-            domain = 'https://roadtorecovery.org.il/prod/Road%20to%20Recovery/pages/';
-        }
-        else {
-            domain = '..';
-        }
+    else{
+        domain = 'https://roadtorecovery.org.il/prod/Road%20to%20Recovery/pages/';
     }
-
-}
-defaultServerDomain();
-
+    // else {
+    //     if (window.location.href.includes('http')==-1) {
+    //         domain = 'https://roadtorecovery.org.il/prod/Road%20to%20Recovery/pages/';
+    //     }
+    //     else {
+    //         domain = '..';
+    //     }
+    // }
+})();
 function getServersSCB(data) {
 
     var servers = JSON.parse(data.d);
@@ -186,7 +182,6 @@ function getServersSCB(data) {
 
     $("#serverUrlInput").html(str);
 }
-
 function getServersECB(e) {
 }
 
@@ -194,11 +189,6 @@ document.addEventListener("backbutton", onBackKeyDown, false);
 function onBackKeyDown(e) {
     event.preventDefault();
 }
-//document.addEventListener("backbutton", function (e) {
-//    alert("back");
-//    //e.preventDefault();
-//    return false;
-//}, false);
 
 //get week function
 Date.prototype.getWeek = function () {
